@@ -1,0 +1,54 @@
+Railverai：GitHub → Vercel 简化部署
+
+这是标准 Next.js 版本，替代旧源码交接包。无需 Cloudflare 或 ChatGPT 登录。
+网站没有 /admin 登录后台。预约、隐私和安全请求存入 Supabase；客户在 Supabase Table Editor 查看。
+
+1. 数据库（一次）
+登录客户的 Supabase 项目，打开 SQL Editor。
+复制 supabase/setup.sql 全部内容并运行。
+在项目 Connect/Settings 中取得 Project URL；在 Settings → API Keys 取得 Secret key（sb_secret_ 开头）。
+不要使用 publishable/anon key，不要将 Secret key 上传 GitHub。
+
+2. 上传源码
+解压此 ZIP，将 railverai-website 文件夹里面的全部文件上传到：
+https://github.com/railverai/railverai-website
+package.json 应位于仓库根目录，不要额外嵌套一层文件夹。
+不要上传 node_modules、.next、.env.local。
+如果仓库已有其他代码，先备份并检查，不要直接覆盖。
+
+3. Vercel
+Add New → Project → Import 上述 GitHub 仓库。
+Framework：Next.js；Root Directory：仓库根目录。
+Build Command：npm run build；Output Directory 保持默认。
+在 Environment Variables 添加两项，至少用于 Production：
+SUPABASE_URL = 客户 Supabase Project URL
+SUPABASE_SECRET_KEY = 客户的 sb_secret_ 密钥
+两项都不能加 NEXT_PUBLIC_ 前缀。
+点击 Deploy；若先部署后添加变量，需 Redeploy。
+Preview 环境要测试表单时也需配置变量，建议使用独立测试数据库。
+
+4. 验收与查看申请
+打开 Vercel 网站 → Book a demo → 提交一条注明 TEST 的申请。
+出现 reference ID 后，在 Supabase → Table Editor → enquiries 查看记录。
+同一邮箱 60 秒内重复提交会被限制；提交失败会显示错误，不会假报成功。
+网站 /admin 返回 404；访问者无法从网站读取申请列表。
+客户只需登录自己的 Supabase 管理界面，即可查看申请并按 created_at 排序。
+如首次提交失败，检查 SQL 是否执行、两个环境变量是否正确、是否重新部署。
+
+5. 域名
+验收后在 Vercel → Settings → Domains 添加域名，按 Vercel 显示的 DNS 记录配置。
+旧 ChatGPT Site 保持原样，不自动关闭。历史预约未迁入此数据库。
+
+本地开发（开发人员）
+Node.js 22.13 或更新版本；npm ci；复制 .env.example 为 .env.local 并填写；npm run dev。
+生产验证：npm run build；npm start。
+
+验收边界
+交付前已做本地生产构建与接口模拟测试。真实 Supabase 写入和客户 Vercel 部署需按第 4 步完成。
+SQL 启用 RLS，禁止 anon/authenticated 直接读写；服务端 Secret key 仅供提交接口使用。
+内置输入校验、蜜罐和按邮箱重复提交限制；它们不是全面的机器人防护。流量增大时可加验证码或平台限流。
+
+官方参考
+https://vercel.com/docs/git
+https://vercel.com/docs/environment-variables
+https://supabase.com/docs/guides/getting-started/api-keys
